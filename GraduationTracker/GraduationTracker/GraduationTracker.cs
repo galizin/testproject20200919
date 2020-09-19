@@ -10,30 +10,23 @@ namespace GraduationTracker
     {   
         public Tuple<bool, STANDING>  HasGraduated(Diploma diploma, Student student)
         {
-            var credits = 0;
-            var average = 0;
+            int credits = 0;
+            int average = 0;
+            int courses = 0;
         
-            for(int i = 0; i < diploma.Requirements.Length; i++)
+            foreach (int req in diploma.Requirements)
             {
-                for(int j = 0; j < student.Courses.Length; j++)
+                var requirement = Repository.GetRequirement(req);
+                var course = student.Courses.SingleOrDefault(c => c.Id == requirement.Id);
+                if (course != null)
                 {
-                    var requirement = Repository.GetRequirement(diploma.Requirements[i]);
-
-                    for (int k = 0; k < requirement.Courses.Length; k++)
-                    {
-                        if (requirement.Courses[k] == student.Courses[j].Id)
-                        {
-                            average += student.Courses[j].Mark;
-                            if (student.Courses[j].Mark > requirement.MinimumMark)
-                            {
-                                credits += requirement.Credits;
-                            }
-                        }
-                    }
+                    average += course.Mark;
+                    credits += course.Mark > requirement.MinimumMark ? requirement.Credits : 0;
+                    courses++;
                 }
             }
 
-            average = average / student.Courses.Length;
+            average = average / courses;
 
             var standing = STANDING.None;
 
