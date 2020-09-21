@@ -1,23 +1,20 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace GraduationTracker
 {
     public partial class GraduationTracker
-    {   
-        public Tuple<bool, STANDING>  HasGraduated(Diploma diploma, Student student)
+    {
+        public Tuple<bool, STANDING> HasGraduated(Diploma diploma, Student student)
         {
             int credits = 0;
             int average = 0;
             int courses = 0;
-        
+
             foreach (int req in diploma.Requirements)
             {
-                var requirement = Repository.GetRequirement(req);
-                var course = student.Courses.SingleOrDefault(c => c.Id == requirement.Id);
+                Requirement requirement = Repository.GetRequirement(req);
+                Course course = student.Courses.SingleOrDefault(c => c.Id == requirement.Courses[0]);
                 if (course != null)
                 {
                     average += course.Mark;
@@ -26,9 +23,12 @@ namespace GraduationTracker
                 }
             }
 
+            if (courses == 0)
+                throw new Exception("no courses matching requirements were found");
+
             average = average / courses;
 
-            var standing = STANDING.None;
+            STANDING standing = STANDING.None;
 
             if (average < 50)
                 standing = STANDING.Remedial;
@@ -37,22 +37,9 @@ namespace GraduationTracker
             else if (average < 95)
                 standing = STANDING.MagnaCumLaude;
             else
-                standing = STANDING.MagnaCumLaude;
+                standing = STANDING.SummaCumLaude;
 
-            switch (standing)
-            {
-                case STANDING.Remedial:
-                    return new Tuple<bool, STANDING>(false, standing);
-                case STANDING.Average:
-                    return new Tuple<bool, STANDING>(true, standing);
-                case STANDING.SumaCumLaude:
-                    return new Tuple<bool, STANDING>(true, standing);
-                case STANDING.MagnaCumLaude:
-                    return new Tuple<bool, STANDING>(true, standing);
-
-                default:
-                    return new Tuple<bool, STANDING>(false, standing);
-            } 
+            return new Tuple<bool, STANDING>(!(standing == STANDING.Remedial || standing == STANDING.None), standing);
         }
     }
 }
